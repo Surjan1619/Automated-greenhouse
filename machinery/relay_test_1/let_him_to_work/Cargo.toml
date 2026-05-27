@@ -1,0 +1,10 @@
+[package]
+name = "let_him_to_work"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+hidapi = "2.6.3"
+serde = { version = "1.0", features = ["derive"] }
+axum = "0.7"
+tokio = { version = "1.37", features = ["full"] }

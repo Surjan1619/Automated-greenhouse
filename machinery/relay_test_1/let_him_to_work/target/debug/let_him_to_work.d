@@ -1,0 +1,1 @@
+C:\Users\Sur\Desktop\Rust\greenhouse_project\relay_test_1\let_him_to_work\target\debug\let_him_to_work.exe: C:\Users\Sur\Desktop\Rust\greenhouse_project\relay_test_1\let_him_to_work\src\main.rs C:\Users\Sur\Desktop\Rust\greenhouse_project\relay_test_1\let_him_to_work\src\module_controllers.rs

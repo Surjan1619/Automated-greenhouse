@@ -1,0 +1,9 @@
+[package]
+name = "socket_connection"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+tokio = { version = "1.37", features = ["full"] }
+axum = { version = "0.7", features = ["ws"] }
+futures = "0.3"

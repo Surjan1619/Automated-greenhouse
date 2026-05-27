@@ -1,0 +1,2 @@
+for<'a> fn(&'a mut Extension<RelayHid>) -> impl Future<Output = std::string::String> {stop_motor}
+for<'a> fn(&'a mut Extension<RelayHid>) -> impl Future<Output = std::string::String> {stop_motor}: Handler<_, _>
