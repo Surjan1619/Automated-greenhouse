@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Теплица - Приёмник Сигналов</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0f172a;
+            color: #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .card {
+            background: #1e293b;
+            border-radius: 16px;
+            padding: 30px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #334155;
+        }
+        h2 { text-align: center; margin-bottom: 20px; color: #f8fafc; font-weight: 600; }
+        
+        .status-box {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid #1e293b;
+        }
+        .status-left { display: flex; align-items: center; gap: 10px; }
+        .indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ef4444; /* По умолчанию красный */
+            box-shadow: 0 0 10px #ef4444;
+            transition: all 0.3s ease;
+        }
+        .indicator.online {
+            background: #10b981; /* Зеленый при подключении */
+            box-shadow: 0 0 10px #10b981;
+        }
+        .device-tag {
+            background: #3b82f6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-family: monospace;
+        }
+
+        .action-display {
+            background: #334155;
+            border-radius: 10px;
+            padding: 25px;
+            text-align: center;
+            margin-bottom: 20px;
+            border: 2px dashed #475569;
+        }
+        .action-title { font-size: 14px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+        .action-value { font-size: 32px; font-weight: bold; color: #3b82f6; margin-top: 10px; font-family: monospace; }
+
+        .console-log {
+            background: #090d16;
+            border-radius: 8px;
+            padding: 15px;
+            height: 150px;
+            overflow-y: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            color: #38bdf8;
+            border: 1px solid #1e293b;
+        }
+        .log-item { margin-bottom: 6px; line-height: 1.4; }
+        .log-time { color: #64748b; margin-right: 5px; }
+    </style>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+</head>
+<body>
+
+<div class="card">
+    <h2>Компьютер Лебёдки</h2>
+    
+    <div class="status-box">
+        <div class="status-left">
+            <div id="indicator" class="indicator"></div>
+            <span id="status-text">Оффлайн</span>
+        </div>
+        <div>
+            ID: <span class="device-tag">winch_123</span>
+        </div>
+    </div>
+
+    <div class="action-display">
+        <div class="action-title">Текущая команда реле</div>
+        <div id="current-command" class="action-value">ОЖИДАНИЕ</div>
+    </div>
+
+    <div id="console" class="console-log">
+        <div class="log-item"><span class="log-time">[Система]:</span> Скрипт готов к запуску...</div>
+    </div>
+</div>
+
+<script>
+    // Уникальный ID нашей теплицы (совпадает с тем, что ждет сервер)
+    const MY_DEVICE_ID = "winch_123";
+
+    const indicator = document.getElementById('indicator');
+    const statusText = document.getElementById('status-text');
+    const currentCommand = document.getElementById('current-command');
+    const consoleLog = document.getElementById('console');
+
+    // СПОСОБ №2: Подключаемся и СРАЗУ передаем наш ID в параметрах запроса (query)
+    const socket = io({
+        query: {
+            deviceId: MY_DEVICE_ID
+        }
+    });
+
+    // Успешное подключение
+    socket.on('connect', () => {
+        indicator.classList.add('online');
+        statusText.innerText = "В сети (Socket.IO)";
+        statusText.style.color = "#10b981";
+        addLog("Успешное рукопожатие. Сервер авторизовал ID и выделил комнату.");
+    });
+
+    // Слушаем команды от сервера (которые прилетят из HTTP-моста от телефона)
+    socket.on('command', (cmd) => {
+        addLog(`Получена команда из облака: [${cmd}]`);
+        
+        // Визуализируем команду на экране
+        currentCommand.innerText = cmd;
+
+        // Логика управления цветом в зависимости от команды
+        if (cmd === "UP") {
+            currentCommand.style.color = "#10b981"; // Зеленый для подъема
+        } else if (cmd === "DOWN") {
+            currentCommand.style.color = "#f59e0b"; // Оранжевый для спуска
+        } else {
+            currentCommand.style.color = "#ef4444"; // Красный для СТОП
+        }
+
+        // ТУТ ВАШ СЛЕДУЮЩИЙ ШАГ: 
+        // Если этот код крутится, например, на Raspberry Pi или ПК с реле,
+        // вы вызываете функцию железа: hardware.triggerRelay(cmd);
+    });
+
+    // Отключение от сервера
+    socket.on('disconnect', () => {
+        indicator.classList.remove('online');
+        statusText.innerText = "Оффлайн";
+        statusText.style.color = "#ef4444";
+        currentCommand.innerText = "ОЖИДАНИЕ";
+        currentCommand.style.color = "#3b82f6";
+        addLog("Соединение потеряно. Ожидание авто-переподключения...");
+    });
+
+    // Вспомогательная функция для логирования на экране
+    function addLog(text) {
+        const time = new Date().toLocaleTimeString();
+        const item = document.createElement('div');
+        item.className = 'log-item';
+        item.innerHTML = `<span class="log-time">[${time}]:</span> ${text}`;
+        consoleLog.appendChild(item);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

@@ -1,1 +1,1 @@
-C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\target\debug\socket_connection.exe: C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\src\main.rs
+C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\target\debug\socket_connection.exe: C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\index.html C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\src\Hid_Control.rs C:\Users\Sur\Desktop\Rust\greenhouse_project\server\socket_connection\src\main.rs

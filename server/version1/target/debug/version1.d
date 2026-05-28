@@ -1,0 +1,1 @@
+C:\Users\Sur\Desktop\Rust\greenhouse_project\server\version1\target\debug\version1.exe: C:\Users\Sur\Desktop\Rust\greenhouse_project\server\version1\index.html C:\Users\Sur\Desktop\Rust\greenhouse_project\server\version1\src\main.rs

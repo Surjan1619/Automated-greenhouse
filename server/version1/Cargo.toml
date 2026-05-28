@@ -1,0 +1,11 @@
+[package]
+name = "version1"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1", features = ["full"] }
+socketioxide = "0.14" # Актуальная версия SocketOxide
+serde = { version = "1.0", features = ["derive"] }
+url = "2.5"

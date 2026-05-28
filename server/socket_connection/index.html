@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульт управления теплицей</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            text-align: center;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h2 { color: #333; margin-bottom: 5px; }
+        
+        /* Индикатор статуса */
+        .status-panel {
+            margin-bottom: 25px;
+            font-size: 14px;
+            color: #666;
+        }
+        #status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background-color: #ff4d4d; /* По умолчанию красный (отключен) */
+            margin-right: 5px;
+        }
+
+        /* Кнопки управления */
+        button {
+            font-size: 22px;
+            font-weight: bold;
+            margin: 10px 0;
+            padding: 18px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            color: white;
+            width: 100%;
+            transition: transform 0.1s, opacity 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-up { background-color: #2ec4b6; }     /* Бирюзовый для ВВЕРХ */
+        .btn-down { background-color: #3a86c8; }   /* Синий для ВНИЗ */
+        .btn-stop { background-color: #e63946; }   /* Красный для СТОП */
+        
+        /* Лог сообщений для тестов */
+        #log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #eee;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 120px;
+            overflow-y: auto;
+            text-align: left;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Управление окном</h2>
+    
+    <div class="status-panel">
+        <span id="status-indicator"></span>
+        <span id="status-text">Подключение...</span>
+    </div>
+
+    <button id="btn-up" class="btn-up" onclick="sendWinchCommand('UP')" disabled>⬆ ВВЕРХ</button>
+    <button id="btn-stop" class="btn-stop" onclick="sendWinchCommand('STOP')" disabled>🛑 СТОП</button>
+    <button id="btn-down" class="btn-down" onclick="sendWinchCommand('DOWN')" disabled>⬇ ВНИЗ</button>
+
+    <div id="log">Система готова к запуску.</div>
+</div>
+
+<script>
+    // ИСПРАВЛЕНО: Динамический адрес. Автоматически берет IP того устройства, 
+    // с которого открыли страницу (работает и на ПК, и на телефонах).
+    // Если файл открыт просто с диска, подставится дефолтный localhost:3000
+    const currentHost = window.location.host || 'localhost:3000';
+    const serverUrl = 'ws://' + currentHost + '/ws';
+    
+    let socket;
+
+    const statusIndicator = document.getElementById('status-indicator');
+    const statusText = document.getElementById('status-text');
+    const logDiv = document.getElementById('log');
+    const buttons = [
+        document.getElementById('btn-up'),
+        document.getElementById('btn-stop'),
+        document.getElementById('btn-down')
+    ];
+
+    function initWebSocket() {
+        log('Попытка подключения к ' + serverUrl);
+        socket = new WebSocket(serverUrl);
+
+        // Успешное подключение
+        socket.onopen = () => {
+            statusIndicator.style.backgroundColor = '#4caf50'; // Зеленый
+            statusText.innerText = 'На связи с сервером';
+            log('Успешно подключено к серверу!');
+            // Активируем кнопки
+            buttons.forEach(btn => btn.disabled = false);
+        };
+
+        // ИСПРАВЛЕНО: Ошибка сокета (убрали ошибку undefined)
+        socket.onerror = () => {
+            log('Ошибка связи WebSocket! Возможно, соединение заблокировано сетью или браузером.');
+        };
+
+        // ИСПРАВЛЕНО: Теперь выводим точный цифровой код закрытия сокета
+        socket.onclose = (event) => {
+            statusIndicator.style.backgroundColor = '#ff4d4d'; // Красный
+            statusText.innerText = 'Отключено';
+            
+            log(`Соединение закрыто. Код: ${event.code}. Причина: ${event.reason || 'не указана'}`);
+            
+            // Блокируем кнопки, так как связи нет
+            buttons.forEach(btn => btn.disabled = true);
+            
+            // Автоматическое переподключение через 3 секунды
+            log('Переподключение через 3 секунды...');
+            setTimeout(initWebSocket, 3000);
+        };
+
+        // Получение сообщений от сервера
+        socket.onmessage = (event) => {
+            log('Получено от сервера: ' + event.data);
+        };
+    }
+
+    // Функция отправки команды
+    function sendWinchCommand(command) {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            socket.send(command);
+            log('Отправлена команда: ' + command);
+        } else {
+            log('Ошибка: Соединение закрыто, отправка невозможна!');
+        }
+    }
+
+    // Вспомогательная функция для вывода логов на экран
+    function log(message) {
+        const time = new Date().toLocaleTimeString();
+        logDiv.innerHTML += `<div>[${time}] ${message}</div>`;
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+
+    // Запуск сети при загрузке страницы
+    initWebSocket();
+</script>
+
+</body>
+</html>
