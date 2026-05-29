@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пульт ДУ Лебёдкой</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #0f172a;
+            color: #f8fafc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .remote-card {
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.4);
+            border: 1px solid #334155;
+        }
+        h2 { text-align: center; margin-bottom: 25px; font-size: 24px; color: #38bdf8; }
+        
+        .input-group {
+            margin-bottom: 25px;
+        }
+        label { display: block; margin-bottom: 8px; font-size: 14px; color: #94a3b8; }
+        input {
+            width: 100%;
+            padding: 14px;
+            background: #0f172a;
+            border: 2px solid #334155;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            font-family: monospace;
+            transition: border-color 0.2s;
+        }
+        input:focus { outline: none; border-color: #38bdf8; }
+
+        .btn {
+            width: 100%;
+            padding: 16px;
+            margin-bottom: 15px;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.1s, filter 0.2s;
+        }
+        .btn:active { transform: scale(0.98); }
+        
+        .btn-up { background: #10b981; }      /* Зеленый */
+        .btn-down { background: #f59e0b; }    /* Оранжевый */
+        .btn-stop { background: #ef4444; }    /* Красный */
+        
+        .btn:hover { filter: brightness(1.1); }
+
+        .status-log {
+            margin-top: 20px;
+            padding: 12px;
+            background: #0f172a;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            color: #64748b;
+            border: 1px solid #334155;
+        }
+    </style>
+</head>
+<body>
+
+<div class="remote-card">
+    <h2>Пульт Управления</h2>
+
+    <div class="input-group">
+        <label for="deviceId">ID ТЕПЛИЦЫ / УСТРОЙСТВА</label>
+        <input type="text" id="deviceId" value="winch_123" placeholder="Например: winch_123">
+    </div>
+
+    <button class="btn btn-up" onclick="sendCommand('UP')">⬆ ПОДНЯТЬ</button>
+
+    <button class="btn btn-down" onclick="sendCommand('DOWN')">⬇ ОПУСТИТЬ</button>
+
+    <button class="btn btn-stop" onclick="sendCommand('STOP')">🛑 СТОП / ОТКЛЮЧИТЬ</button>
+
+    <div id="status" class="status-log">Ожидание нажатия...</div>
+</div>
+
+<script>
+    async function sendCommand(command) {
+        const deviceIdInput = document.getElementById('deviceId').value.trim();
+        const statusDiv = document.getElementById('status');
+
+        // Проверяем, не забыл ли пользователь ввести имя устройства
+        if (!deviceIdInput) {
+            statusDiv.innerText = "❌ Ошибка: Введите ID устройства!";
+            statusDiv.style.color = "#ef4444";
+            return;
+        }
+
+        // Автоматически определяем IP и порт сервера, с которого открыта страница
+        const serverUrl = window.location.origin; 
+        
+        // Формируем КОРРЕКТНЫЙ URL без двоеточий
+        // Получится: http://localhost:8080/api/control/winch_123/UP
+        const finalUrl = `${serverUrl}/api/control/${deviceIdInput}/${command}`;
+
+        statusDiv.innerText = `Отправка [${command}]...`;
+        statusDiv.style.color = "#64748b";
+
+        try {
+            // Делаем фоновый HTTP-запрос к нашему Rust-серверу
+            const response = await fetch(finalUrl);
+            
+            if (response.ok) {
+                statusDiv.innerText = `Успешно отправлено: ${command}`;
+                statusDiv.style.color = "#10b981";
+            } else {
+                statusDiv.innerText = `Ошибка сервера: ${response.status}`;
+                statusDiv.style.color = "#ef4444";
+            }
+        } catch (error) {
+            statusDiv.innerText = "Ошибка сети (Проверьте связь с сервером)";
+            statusDiv.style.color = "#ef4444";
+        }
+    }
+</script>
+
+</body>
+</html>

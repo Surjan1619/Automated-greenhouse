@@ -1,0 +1,1 @@
+C:\Users\Sur\Desktop\Rust\greenhouse_project\machinery\device\target\debug\device.exe: C:\Users\Sur\Desktop\Rust\greenhouse_project\machinery\device\src\main.rs C:\Users\Sur\Desktop\Rust\greenhouse_project\machinery\device\src\module_controller.rs

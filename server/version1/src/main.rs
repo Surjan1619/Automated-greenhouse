@@ -44,6 +44,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(show_index))
+        .route("/controller", get(get_controller_page))
         .route("/api/control/:device_id/:command", get(http_control_handler))
         .layer(layer)
         .with_state(io);
@@ -68,4 +69,7 @@ async fn http_control_handler(
 
 async fn show_index() -> Html<&'static str> {
     Html(include_str!("../index.html"))
+}
+async fn get_controller_page() -> Html<&'static str> {
+    Html(include_str!("../controller.html"))
 }
